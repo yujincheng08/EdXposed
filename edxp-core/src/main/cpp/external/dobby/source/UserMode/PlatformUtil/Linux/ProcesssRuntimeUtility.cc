@@ -84,6 +84,7 @@ std::vector<MemoryRegion> ProcessRuntimeUtility::GetProcessMemoryLayout() {
     ProcessMemoryLayout.push_back(MemoryRegion{(void *)region_start, region_end - region_start, permission});
   }
   std::sort(ProcessMemoryLayout.begin(), ProcessMemoryLayout.end(), memory_region_comparator);
+  fclose(fp);
 
   return ProcessMemoryLayout;
 }
@@ -162,6 +163,7 @@ static std::vector<RuntimeModule> get_process_map_with_proc_maps() {
     module.load_address = (void *)region_start;
     ProcessModuleMap.push_back(module);
   }
+    fclose(fp);
 
   return ProcessModuleMap;
 }
