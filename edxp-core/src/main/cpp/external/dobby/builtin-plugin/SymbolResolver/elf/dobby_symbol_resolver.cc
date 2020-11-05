@@ -43,6 +43,7 @@ static void file_mmap(const char *file_path, uint8_t **data_ptr, size_t *data_si
   }
 
 finished:
+  close(fd);
   if (data_size_ptr)
     *data_size_ptr = file_size;
   if (data_ptr)

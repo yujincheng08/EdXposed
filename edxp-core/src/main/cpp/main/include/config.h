@@ -38,9 +38,6 @@ namespace edxp {
     static const auto kLibBasePath = std::string(
             LP_SELECT("/system/lib/",
                       "/system/lib64/"));
-    static const auto kLinkerPath = std::string(
-            LP_SELECT("/apex/com.android.runtime/bin/linker",
-                      "/apex/com.android.runtime/bin/linker64"));
 
     static const auto kLibDlPath = kLibBasePath + kLibDlName;
     static const auto kLibArtLegacyPath = kLibBasePath + kLibArtName;

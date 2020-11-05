@@ -151,9 +151,8 @@ endif()
 
 set(dobby.SOURCE_FILE_LIST ${dobby.SOURCE_FILE_LIST}
   # plugin for edxp
-  builtin-plugin/AndroidRestriction/android_restriction_demo.cc
 
-  # cpu
+        # cpu
   source/core/arch/CpuFeature.cc
   source/core/arch/CpuRegister.cc
 
