@@ -32,8 +32,6 @@ namespace edxp {
 
     void InstallFwkHooks(void *fwk_handle);
 
-    bool InstallLinkerHooks(const char *linker_path);
-
     void InstallInlineHooks() {
         if (installed) {
             LOGI("Inline hooks have been installed, skip");
