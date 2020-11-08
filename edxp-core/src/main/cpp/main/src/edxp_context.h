@@ -81,7 +81,7 @@ namespace edxp {
         jclass class_linker_class_ = nullptr;
         jmethodID pre_fixup_static_mid_ = nullptr;
         jmethodID post_fixup_static_mid_ = nullptr;
-        bool is_child_zygote_ = false;
+        bool skip_ = false;
 
         Context() {}
 

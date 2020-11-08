@@ -223,27 +223,40 @@ namespace edxp {
                                                jstring app_data_dir) {
         app_data_dir_ = app_data_dir;
         nice_name_ = nice_name;
-        is_child_zygote_ = is_child_zygote;
 
-        const auto *nativeString = "UNKNOWN NAME";
+        const auto *package_name = "UNKNOWN";
         if (nice_name_) {
-            nativeString = env->GetStringUTFChars(nice_name, nullptr);
-            LOGD("Injecting xposed into %s", nativeString);
+            package_name = env->GetStringUTFChars(nice_name, nullptr);
         }
-        if (!is_child_zygote_) {
+        LOGD("Injecting xposed into %s", package_name);
+        if (is_child_zygote) {
+            skip_ = true;
+            LOGW("skip injecting xposed into %s because it's a children zygote", package_name);
+        }
+
+        if (app_data_dir) {
+            const auto *data_dir = env->GetStringUTFChars(app_data_dir, nullptr);
+            skip_ = !ConfigManager::GetInstance()->IsAppNeedHook(data_dir);
+            if (skip_)
+                LOGW("skip injecting xposed into %s because it's whitelisted/blacklisted",
+                     package_name);
+        } else {
+            skip_ = true;
+            LOGW("skip injecting xposed into %s because it has no app data dir",
+                 package_name);
+        }
+        if (!skip_) {
             PrepareJavaEnv(env);
             FindAndCall(env, "forkAndSpecializePre",
                         "(II[II[[IILjava/lang/String;Ljava/lang/String;[I[IZLjava/lang/String;Ljava/lang/String;)V",
                         uid, gid, gids, runtime_flags, rlimits,
                         mount_external, se_info, nice_name, fds_to_close, fds_to_ignore,
                         is_child_zygote, instruction_set, app_data_dir);
-        } else {
-            LOGW("skip injecting xposed into %s because it's a children zygote", nativeString);
         }
     }
 
     int Context::OnNativeForkAndSpecializePost(JNIEnv *env, jclass clazz, jint res) {
-        if (res == 0 && !is_child_zygote_) {
+        if (res == 0 && !skip_) {
             PrepareJavaEnv(env);
             FindAndCall(env, "forkAndSpecializePost", "(ILjava/lang/String;Ljava/lang/String;)V",
                         res, app_data_dir_, nice_name_);
