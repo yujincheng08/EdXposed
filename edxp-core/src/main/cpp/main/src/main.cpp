@@ -23,8 +23,11 @@
 
 namespace edxp {
 
-    constexpr int AID_ISOLATED_START = 90000;
-    constexpr int AID_ISOLATED_END = 99999;
+    constexpr int FIRST_ISOLATED_UID = 99000;
+    constexpr int LAST_ISOLATED_UID = 99999;
+    constexpr int FIRST_APP_ZYGOTE_ISOLATED_UID = 90000;
+    constexpr int LAST_APP_ZYGOTE_ISOLATED_UID = 98999;
+    constexpr int SHARED_RELRO_UID = 1037;
 
     // TODO exclude unrelated processes
     static void onModuleLoaded() {
@@ -33,8 +36,9 @@ namespace edxp {
     }
 
     static int shouldSkipUid(int uid) {
-        return 0;
-        return uid >= AID_ISOLATED_START && uid <= AID_ISOLATED_END;
+        return (uid >= FIRST_ISOLATED_UID && uid <= LAST_ISOLATED_UID) ||
+               (uid >= FIRST_APP_ZYGOTE_ISOLATED_UID && uid <= LAST_APP_ZYGOTE_ISOLATED_UID) ||
+               uid == SHARED_RELRO_UID;
     }
 
     static void nativeForkAndSpecializePre(JNIEnv *env, jclass clazz, jint *_uid, jint *gid,
