@@ -22,6 +22,10 @@
 #define quote(sequence) "\"" #sequence "\""
 
 namespace edxp {
+
+    constexpr int AID_ISOLATED_START = 90000;
+    constexpr int AID_ISOLATED_END = 99999;
+
     // TODO exclude unrelated processes
     static void onModuleLoaded() {
         LOG(INFO) << "onModuleLoaded: welcome to EdXposed!";
@@ -30,6 +34,7 @@ namespace edxp {
 
     static int shouldSkipUid(int uid) {
         return 0;
+        return uid >= AID_ISOLATED_START && uid <= AID_ISOLATED_END;
     }
 
     static void nativeForkAndSpecializePre(JNIEnv *env, jclass clazz, jint *_uid, jint *gid,
