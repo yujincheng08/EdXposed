@@ -1,4 +1,3 @@
-
 #include <jni.h>
 #include <android-base/macros.h>
 #include <JNIHelper.h>
@@ -22,28 +21,6 @@
 #pragma clang diagnostic ignored "-Wunused-value"
 
 namespace edxp {
-
-    Context *Context::instance_ = nullptr;
-
-    Context *Context::GetInstance() {
-        if (instance_ == nullptr) {
-            instance_ = new Context();
-        }
-        return instance_;
-    }
-
-    ALWAYS_INLINE bool Context::IsInitialized() const {
-        return initialized_;
-    }
-
-    ALWAYS_INLINE Variant Context::GetVariant() const {
-        return variant_;
-    }
-
-    ALWAYS_INLINE jobject Context::GetCurrentClassLoader() const {
-        return inject_class_loader_;
-    }
-
     void Context::CallPostFixupStaticTrampolinesCallback(void *class_ptr, jmethodID callback_mid) {
         if (UNLIKELY(!callback_mid || !class_linker_class_)) {
             return;
@@ -95,7 +72,6 @@ namespace edxp {
             LOG(ERROR) << "PathClassLoader creation failed!!!";
             return;
         }
-
         // TODO clear up all these global refs if blacklisted?
 
         inject_class_loader_ = env->NewGlobalRef(my_cl);
@@ -159,7 +135,7 @@ namespace edxp {
     }
 
     jclass
-    Context::FindClassFromLoader(JNIEnv *env, jobject class_loader, const char *class_name) const {
+    Context::FindClassFromLoader(JNIEnv *env, jobject class_loader, const char *class_name) {
         jclass clz = JNI_GetObjectClass(env, class_loader);
         jmethodID mid = JNI_GetMethodID(env, clz, "loadClass",
                                         "(Ljava/lang/String;)Ljava/lang/Class;");
@@ -206,26 +182,6 @@ namespace edxp {
         }
     }
 
-    ALWAYS_INLINE JavaVM *Context::GetJavaVM() const {
-        return vm_;
-    }
-
-    ALWAYS_INLINE void Context::SetAppDataDir(jstring app_data_dir) {
-        app_data_dir_ = app_data_dir;
-    }
-
-    ALWAYS_INLINE jstring Context::GetAppDataDir() const {
-        return app_data_dir_;
-    }
-
-    ALWAYS_INLINE void Context::SetNiceName(jstring nice_name) {
-        nice_name_ = nice_name;
-    }
-
-    ALWAYS_INLINE jstring Context::GetNiceName() const {
-        return nice_name_;
-    }
-
     void
     Context::OnNativeForkSystemServerPre(JNIEnv *env, jclass clazz, uid_t uid, gid_t gid,
                                          jintArray gids,
@@ -267,7 +223,18 @@ namespace edxp {
                                                jstring app_data_dir) {
         app_data_dir_ = app_data_dir;
         nice_name_ = nice_name;
-        PrepareJavaEnv(env);
+        is_child_zygote_ = is_child_zygote;
+
+        const auto *nativeString = "UNKNOWN NAME";
+        if (nice_name_) {
+            nativeString = env->GetStringUTFChars(nice_name, nullptr);
+            LOGD("INJECTING %s", nativeString);
+        }
+        if (!is_child_zygote_) {
+            PrepareJavaEnv(env);
+        } else {
+            LOGW("skip inject xposed %s because it's a children zygote", nativeString);
+        }
         FindAndCall(env, "forkAndSpecializePre",
                     "(II[II[[IILjava/lang/String;Ljava/lang/String;[I[IZLjava/lang/String;Ljava/lang/String;)V",
                     uid, gid, gids, runtime_flags, rlimits,
@@ -276,7 +243,7 @@ namespace edxp {
     }
 
     int Context::OnNativeForkAndSpecializePost(JNIEnv *env, jclass clazz, jint res) {
-        if (res == 0) {
+        if (res == 0 && !is_child_zygote_) {
             PrepareJavaEnv(env);
             FindAndCall(env, "forkAndSpecializePost", "(ILjava/lang/String;Ljava/lang/String;)V",
                         res, app_data_dir_, nice_name_);

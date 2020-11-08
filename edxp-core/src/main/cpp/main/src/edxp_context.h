@@ -18,9 +18,16 @@ namespace edxp {
     class Context {
 
     public:
-        static Context *GetInstance();
+        inline static Context *GetInstance() {
+            if (instance_ == nullptr) {
+                instance_ = new Context();
+            }
+            return instance_;
+        }
 
-        jobject GetCurrentClassLoader() const;
+        inline jobject GetCurrentClassLoader() const {
+            return inject_class_loader_;
+        }
 
         void CallOnPreFixupStaticTrampolines(void *class_ptr);
 
@@ -30,15 +37,15 @@ namespace edxp {
 
         void FindAndCall(JNIEnv *env, const char *method_name, const char *method_sig, ...) const;
 
-        JavaVM *GetJavaVM() const;
+        inline auto GetJavaVM() const { return vm_; }
 
-        void SetAppDataDir(jstring app_data_dir);
+        inline void SetAppDataDir(jstring app_data_dir) { app_data_dir_ = app_data_dir; }
 
-        void SetNiceName(jstring nice_name);
+        inline void SetNiceName(jstring nice_name) { nice_name_ = nice_name; }
 
-        jstring GetAppDataDir() const;
+        inline auto GetAppDataDir() const { return app_data_dir_; }
 
-        jstring GetNiceName() const;
+        inline auto GetNiceName() const { return nice_name_; }
 
         jclass FindClassFromLoader(JNIEnv *env, const char *className) const;
 
@@ -58,12 +65,12 @@ namespace edxp {
                                          jlong permitted_capabilities,
                                          jlong effective_capabilities);
 
-        bool IsInitialized() const;
+        inline auto GetInitialized() const { return initialized_; }
 
-        Variant GetVariant() const;
+        inline auto GetVariant() const { return variant_; }
 
     private:
-        static Context *instance_;
+        inline static Context *instance_ = nullptr;
         bool initialized_ = false;
         Variant variant_ = NONE;
         jobject inject_class_loader_ = nullptr;
@@ -74,6 +81,7 @@ namespace edxp {
         jclass class_linker_class_ = nullptr;
         jmethodID pre_fixup_static_mid_ = nullptr;
         jmethodID post_fixup_static_mid_ = nullptr;
+        bool is_child_zygote_ = false;
 
         Context() {}
 
@@ -81,7 +89,7 @@ namespace edxp {
 
         void LoadDexAndInit(JNIEnv *env, const char *dex_path);
 
-        jclass FindClassFromLoader(JNIEnv *env, jobject class_loader, const char *class_name) const;
+        static jclass FindClassFromLoader(JNIEnv *env, jobject class_loader, const char *class_name) ;
 
         void CallPostFixupStaticTrampolinesCallback(void *class_ptr, jmethodID mid);
     };
