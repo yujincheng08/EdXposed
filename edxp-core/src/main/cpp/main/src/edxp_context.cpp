@@ -228,18 +228,18 @@ namespace edxp {
         const auto *nativeString = "UNKNOWN NAME";
         if (nice_name_) {
             nativeString = env->GetStringUTFChars(nice_name, nullptr);
-            LOGD("INJECTING %s", nativeString);
+            LOGD("Injecting xposed into %s", nativeString);
         }
         if (!is_child_zygote_) {
             PrepareJavaEnv(env);
+            FindAndCall(env, "forkAndSpecializePre",
+                        "(II[II[[IILjava/lang/String;Ljava/lang/String;[I[IZLjava/lang/String;Ljava/lang/String;)V",
+                        uid, gid, gids, runtime_flags, rlimits,
+                        mount_external, se_info, nice_name, fds_to_close, fds_to_ignore,
+                        is_child_zygote, instruction_set, app_data_dir);
         } else {
-            LOGW("skip inject xposed %s because it's a children zygote", nativeString);
+            LOGW("skip injecting xposed into %s because it's a children zygote", nativeString);
         }
-        FindAndCall(env, "forkAndSpecializePre",
-                    "(II[II[[IILjava/lang/String;Ljava/lang/String;[I[IZLjava/lang/String;Ljava/lang/String;)V",
-                    uid, gid, gids, runtime_flags, rlimits,
-                    mount_external, se_info, nice_name, fds_to_close, fds_to_ignore,
-                    is_child_zygote, instruction_set, app_data_dir);
     }
 
     int Context::OnNativeForkAndSpecializePost(JNIEnv *env, jclass clazz, jint res) {

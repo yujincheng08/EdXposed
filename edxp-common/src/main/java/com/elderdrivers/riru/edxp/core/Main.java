@@ -40,9 +40,6 @@ public class Main implements KeepAll {
                                             String niceName, int[] fdsToClose, int[] fdsToIgnore,
                                             boolean startChildZygote, String instructionSet,
                                             String appDataDir) {
-        if (isBlackListedProcess(uid)) {
-            return;
-        }
         final EdxpImpl edxp = getEdxpImpl();
         if (edxp == null || !edxp.isInitialized()) {
             return;
@@ -67,10 +64,6 @@ public class Main implements KeepAll {
     }
 
     public static void forkAndSpecializePost(int pid, String appDataDir, String niceName) {
-        if (isBlackListedProcess(Process.myUid())) {
-            onBlackListed();
-            return;
-        }
         final EdxpImpl edxp = getEdxpImpl();
         if (edxp == null || !edxp.isInitialized()) {
             return;
@@ -158,12 +151,5 @@ public class Main implements KeepAll {
                 return null;
             }
         });
-    }
-
-    // TODO do this earlier?
-    private static boolean isBlackListedProcess(int uid) {
-        return ProcessHelper.isIsolated(uid)
-                || ProcessHelper.isRELROUpdater(uid)
-                || ProcessHelper.isWebViewZygote(uid);
     }
 }
