@@ -246,7 +246,9 @@ namespace edxp {
             LOGW("skip injecting xposed into %s because it has no app data dir",
                  package_name);
         }
-        env->ReleaseStringUTFChars(nice_name, package_name);
+        if(nice_name) {
+            env->ReleaseStringUTFChars(nice_name, package_name);
+        }
         if (!skip_) {
             PrepareJavaEnv(env);
             FindAndCall(env, "forkAndSpecializePre",
