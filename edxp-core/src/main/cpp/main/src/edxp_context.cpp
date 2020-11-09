@@ -237,6 +237,7 @@ namespace edxp {
         if (app_data_dir) {
             const auto *data_dir = env->GetStringUTFChars(app_data_dir, nullptr);
             skip_ = !ConfigManager::GetInstance()->IsAppNeedHook(data_dir);
+            env->ReleaseStringUTFChars(app_data_dir, data_dir);
             if (skip_)
                 LOGW("skip injecting xposed into %s because it's whitelisted/blacklisted",
                      package_name);
@@ -245,6 +246,7 @@ namespace edxp {
             LOGW("skip injecting xposed into %s because it has no app data dir",
                  package_name);
         }
+        env->ReleaseStringUTFChars(nice_name, package_name);
         if (!skip_) {
             PrepareJavaEnv(env);
             FindAndCall(env, "forkAndSpecializePre",
