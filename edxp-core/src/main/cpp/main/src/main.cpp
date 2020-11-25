@@ -23,8 +23,8 @@
 namespace edxp {
     // TODO exclude unrelated processes
     static void onModuleLoaded() {
-        LOG(INFO) << "onModuleLoaded: welcome to EdXposed!";
-        InstallInlineHooks();
+        LOGI("onModuleLoaded: welcome to EdXposed!");
+        InstallHeapHooks();
     }
 
     static int shouldSkipUid(int uid) {

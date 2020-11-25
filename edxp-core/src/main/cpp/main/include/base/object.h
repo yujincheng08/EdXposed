@@ -64,7 +64,7 @@ namespace edxp {
         }
 
     protected:
-        void *thiz_;
+        void *thiz_ = nullptr;
     };
 
     class HookedObject : public ShadowObject {

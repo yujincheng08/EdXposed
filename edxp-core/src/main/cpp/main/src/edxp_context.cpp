@@ -18,6 +18,7 @@
 #include <sstream>
 #include "edxp_context.h"
 #include "config_manager.h"
+#include "native_hook.h"
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-value"
@@ -245,6 +246,7 @@ namespace edxp {
     int Context::OnNativeForkSystemServerPost(JNIEnv *env, jclass clazz, jint res) {
         if (res == 0) {
             if (!skip_) {
+                InstallInlineHooks();
                 PrepareJavaEnv(env);
                 // only do work in child since FindAndCall would print log
                 FindAndCall(env, "forkSystemServerPost", "(I)V", res);
@@ -345,6 +347,7 @@ namespace edxp {
         if (res == 0) {
             const JUTFString process_name(env, nice_name_);
             if (!skip_) {
+                InstallInlineHooks();
                 PrepareJavaEnv(env);
                 LOGD("Done prepare");
                 FindAndCall(env, "forkAndSpecializePost",

@@ -6,5 +6,5 @@
 namespace edxp {
 
     void InstallInlineHooks();
-
+    void InstallHeapHooks();
 }

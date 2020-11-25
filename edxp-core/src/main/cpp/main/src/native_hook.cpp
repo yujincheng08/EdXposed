@@ -25,7 +25,45 @@ namespace edxp {
 
     static volatile bool installed = false;
     static volatile bool art_hooks_installed = false;
+    static volatile bool heap_hooks_installed = false;
     static HookFunType hook_func = nullptr;
+
+    static void *GetArtHandle() {
+        static void *art_handle = nullptr;
+        if (UNLIKELY(!art_handle)) {
+            // From Riru v22 we can't get ART handle by hooking dlopen, so we get libart.so from soinfo.
+            // Ref: https://android.googlesource.com/platform/bionic/+/master/linker/linker_soinfo.h
+            auto solist = linker_get_solist();
+            bool found = false;
+            for (auto &it : solist) {
+                const char *real_path = linker_soinfo_get_realpath(it);
+                if (real_path != nullptr &&
+                    std::string(real_path).find(kLibArtName) != std::string::npos) {
+                    found = true;
+                    art_handle = it;
+                    break;
+                }
+            }
+            if (!found)
+                LOGE("Android 10+ detected and libart.so can't be found in memory.");
+        }
+        LOGE("GOT art handle %p", art_handle);
+        return art_handle;
+    }
+
+    // TODO: this should be moved the post fork by manually setting offset.
+    void InstallHeapHooks() {
+        if (LIKELY(heap_hooks_installed)) {
+            return;
+        }
+        auto *art_handle = GetAndroidApiLevel() >= __ANDROID_API_Q__ ?
+                GetArtHandle() :
+                ScopedDlHandle(kLibArtLegacyPath.c_str()).Get();
+        if (LIKELY(art_handle)) {
+            heap_hooks_installed = true;
+            art::gc::Heap::Setup(GetArtHandle(), hook_func);
+        }
+    }
 
     void InstallArtHooks(void *art_handle);
 
@@ -45,40 +83,22 @@ namespace edxp {
         InstallRiruHooks();
         hook_func = reinterpret_cast<HookFunType>(DobbyHook);
 
+        auto *art_handle = GetAndroidApiLevel() >= __ANDROID_API_Q__ ?
+                           GetArtHandle() :
+                           ScopedDlHandle(kLibArtLegacyPath.c_str()).Get();
         // install ART hooks
-        if (api_level >= __ANDROID_API_Q__) {
-            // From Riru v22 we can't get ART handle by hooking dlopen, so we get libart.so from soinfo.
-            // Ref: https://android.googlesource.com/platform/bionic/+/master/linker/linker_soinfo.h
-            auto solist = linker_get_solist();
-            bool found = false;
-            for (auto & it : solist) {
-                const char* real_path = linker_soinfo_get_realpath(it);
-                if (real_path != nullptr && std::string(real_path).find(kLibArtName) != std::string::npos) {
-                    found = true;
-                    InstallArtHooks(it);
-                    break;
-                }
-            }
-            if(!found) {
-                LOGE("Android 10+ detected and libart.so can't be found in memory.");
-                return;
-            }
-        } else {
-            // do dlopen directly in Android 9-
-            ScopedDlHandle art_handle(kLibArtLegacyPath.c_str());
-            InstallArtHooks(art_handle.Get());
-        }
+        InstallArtHooks(art_handle);
     }
 
     void InstallArtHooks(void *art_handle) {
         if (art_hooks_installed) {
             return;
         }
+        if(!art_handle) return;
         if (ConfigManager::GetInstance()->IsHiddenAPIBypassEnabled()) {
             art::hidden_api::DisableHiddenApi(art_handle, hook_func);
         }
         art::Runtime::Setup(art_handle, hook_func);
-        art::gc::Heap::Setup(art_handle, hook_func);
         art::ClassLinker::Setup(art_handle, hook_func);
         art::mirror::Class::Setup(art_handle, hook_func);
         art::JNIEnvExt::Setup(art_handle, hook_func);
