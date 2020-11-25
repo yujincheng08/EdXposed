@@ -1,16 +1,13 @@
 package com.elderdrivers.riru.edxp.proxy;
 
 import android.app.ActivityThread;
-import android.content.pm.ApplicationInfo;
-import android.content.res.CompatibilityInfo;
+import android.app.LoadedApk;
 import android.text.TextUtils;
 
-import com.elderdrivers.riru.edxp._hooker.impl.HandleBindApp;
-import com.elderdrivers.riru.edxp._hooker.impl.LoadedApkCstr;
+import com.elderdrivers.riru.edxp._hooker.impl.CreateAppContext;
 import com.elderdrivers.riru.edxp._hooker.impl.StartBootstrapServices;
 import com.elderdrivers.riru.edxp._hooker.impl.SystemMain;
-import com.elderdrivers.riru.edxp._hooker.yahfa.HandleBindAppHooker;
-import com.elderdrivers.riru.edxp._hooker.yahfa.LoadedApkConstructorHooker;
+import com.elderdrivers.riru.edxp._hooker.yahfa.CreateAppContextHooker;
 import com.elderdrivers.riru.edxp._hooker.yahfa.StartBootstrapServicesHooker;
 import com.elderdrivers.riru.edxp._hooker.yahfa.SystemMainHooker;
 import com.elderdrivers.riru.edxp.core.yahfa.HookMain;
@@ -86,14 +83,9 @@ public abstract class BaseRouter implements Router {
                 XposedHelpers.findAndHookMethod(SystemMainHooker.className, classLoader,
                         SystemMainHooker.methodName, new SystemMain());
             }
-            XposedHelpers.findAndHookMethod(HandleBindAppHooker.className, classLoader,
-                    HandleBindAppHooker.methodName,
-                    "android.app.ActivityThread$AppBindData",
-                    new HandleBindApp());
-            XposedHelpers.findAndHookConstructor(LoadedApkConstructorHooker.className, classLoader,
-                    ActivityThread.class, ApplicationInfo.class, CompatibilityInfo.class,
-                    ClassLoader.class, boolean.class, boolean.class, boolean.class,
-                    new LoadedApkCstr());
+            XposedHelpers.findAndHookMethod(CreateAppContextHooker.className, classLoader, CreateAppContextHooker.methodName,
+                    ActivityThread.class, LoadedApk.class,
+                    new CreateAppContext());
         } else {
             if (isSystem) {
                 HookMain.doHookDefault(

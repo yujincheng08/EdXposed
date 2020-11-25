@@ -18,4 +18,10 @@ public final class LoadedApk {
 	public String getResDir() {
 		throw new UnsupportedOperationException("STUB");
 	}
+
+	public String getAppDir() {
+		throw new UnsupportedOperationException("STUB");
+	}
+
+	boolean mIncludeCode;
 }

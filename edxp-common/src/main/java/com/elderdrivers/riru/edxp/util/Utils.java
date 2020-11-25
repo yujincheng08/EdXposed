@@ -14,7 +14,6 @@ public class Utils {
     public static final String LOG_TAG = "EdXposed";
 
     public static void logD(Object msg) {
-        if (BuildConfig.DEBUG)
             Log.d(LOG_TAG, msg.toString());
     }
 

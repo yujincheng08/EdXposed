@@ -1,6 +1,7 @@
 package com.elderdrivers.riru.edxp.hooker;
 
 import com.elderdrivers.riru.edxp.config.ConfigManager;
+import com.elderdrivers.riru.edxp.util.Hookers;
 import com.elderdrivers.riru.edxp.util.Utils;
 
 import java.io.File;
@@ -17,15 +18,16 @@ public class XposedInstallerHooker {
     private static final String LEGACY_INSTALLER_PACKAGE_NAME = "de.robv.android.xposed.installer";
 
     public static void hookXposedInstaller(ClassLoader classLoader) {
+        Hookers.logD("Hook Installer");
         try {
             final String xposedAppClass = LEGACY_INSTALLER_PACKAGE_NAME + ".XposedApp";
             final Class InstallZipUtil = XposedHelpers.findClass(LEGACY_INSTALLER_PACKAGE_NAME
                     + ".util.InstallZipUtil", classLoader);
-            XposedHelpers.findAndHookMethod(xposedAppClass, classLoader, "getActiveXposedVersion", new XC_MethodHook() {
+            XposedHelpers.findAndHookMethod(xposedAppClass, classLoader, "getActiveXposedVersion", new XC_MethodReplacement() {
                 @Override
-                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                    Utils.logD("after getActiveXposedVersion...");
-                    param.setResult(XposedBridge.getXposedVersion());
+                protected Object replaceHookedMethod(MethodHookParam param) {
+                    Utils.logD("on getActiveXposedVersion");
+                    return XposedBridge.getXposedVersion();
                 }
             });
             XposedHelpers.findAndHookMethod(xposedAppClass, classLoader,
